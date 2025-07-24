@@ -12,7 +12,7 @@ st.set_page_config(page_title="Student Attendance Tracker", layout="wide")
 
 # Google Sheets API Setup
 SPREADSHEET_ID = '1QBEXA0UVnpfXGpxbhYsqiaIhXPhRS60H'  # Replace with actual sheet ID
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 @st.cache_data(show_spinner=False)
 def load_data():
