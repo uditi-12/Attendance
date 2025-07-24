@@ -11,7 +11,7 @@ st.set_page_config(page_title="Student Attendance Tracker", layout="wide")
 @st.cache_data
 def load_data():
     try:
-        table1 = pd.read_excel("/content/Attendance.xlsx", sheet_name='S1 - Student Details')
+        table1 = pd.read_excel("https://docs.google.com/spreadsheets/d/1QBEXA0UVnpfXGpxbhYsqiaIhXPhRS60H/edit?usp=sharing&ouid=101250663179398377883&rtpof=true&sd=true", sheet_name='S1 - Student Details')
         # table2 = pd.read_excel("/content/Attendance.xlsx", sheet_name='S2 - Attendance')
         return table1#, table2
     except Exception as e:
