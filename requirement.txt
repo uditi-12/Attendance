@@ -4,3 +4,6 @@ openpyxl
 numpy
 os
 datetime
+gspread
+oauth2client
+gspread_dataframe
