@@ -167,17 +167,30 @@ elif mode == "📝 Mark Attendance":
         }
 
     if st.button("✅ Submit Attendance"):
-        existing_log = pd.read_csv("attendance_log.csv") if os.path.exists("attendance_log.csv") else pd.DataFrame(columns=["Date", "Student Name", "Class", "Teacher", "Parent 1", "Status"])
-        existing_today = existing_log[existing_log["Date"] == today]
-
+        # Step 1: Read existing attendance data from the sheet
+        # https://docs.google.com/spreadsheets/d/1iZHggnfAjbNPZD_lV0fDCLmbVc1s7Kj0vCZYm5YLPtY/edit?usp=sharing
+        SPREADSHEET_ID_2 = "1iZHggnfAjbNPZD_lV0fDCLmbVc1s7Kj0vCZYm5YLPtY"
+        result = sheet.values().get(
+            spreadsheetId=SPREADSHEET_ID_2,
+            # range=ATTENDANCE_RANGE
+        ).execute()
+    
+        values = result.get("values", [])
+        headers = values[0] if values else ["Date", "Student Name", "Class", "Teacher", "Parent 1", "Status"]
+        existing_data = pd.DataFrame(values[1:], columns=headers) if len(values) > 1 else pd.DataFrame(columns=headers)
+    
+        # Step 2: Check if today's attendance already exists
+        existing_today = existing_data[existing_data["Date"] == today]
+    
         if not existing_today.empty:
             st.warning("⚠️ Attendance for this date already exists!")
             update = st.radio("Do you want to update it?", ["No", "Yes"], index=0)
             if update == "No":
                 st.stop()
             else:
-                existing_log = existing_log[existing_log["Date"] != today]
-
+                existing_data = existing_data[existing_data["Date"] != today]
+    
+        # Step 3: Create new attendance entries
         attendance_log = []
         for entry in attendance_status.values():
             teacher = students[
@@ -185,21 +198,27 @@ elif mode == "📝 Mark Attendance":
                 (students["Class"] == entry["Class"]) &
                 (students["Parents Number 1"] == entry["Parent 1"])
             ]['Teacher Name'].values[0]
-
-            attendance_log.append({
-                "Date": today,
-                "Student Name": entry["Student Name"],
-                "Class": entry["Class"],
-                "Teacher": teacher,
-                "Parent 1": entry["Parent 1"],
-                "Status": entry["Status"]
-            })
-
-        df_log = pd.DataFrame(attendance_log)
-        final_log = pd.concat([existing_log, df_log], ignore_index=True)
-        final_log.to_csv("attendance_log.csv", index=False)
-
-        st.success("✅ Attendance saved successfully!")
+    
+            attendance_log.append([
+                today,
+                entry["Student Name"],
+                entry["Class"],
+                teacher,
+                entry["Parent 1"],
+                entry["Status"]
+            ])
+    
+        # Step 4: Upload updated attendance log to Google Sheet
+        updated_data = existing_data.values.tolist() + attendance_log
+        sheet.values().update(
+            spreadsheetId=SPREADSHEET_ID_2,
+            # range=ATTENDANCE_RANGE,
+            valueInputOption="RAW",
+            body={"values": [headers] + updated_data}
+        ).execute()
+    
+        st.success("✅ Attendance saved to Google Sheet successfully!")
+        df_log = pd.DataFrame(attendance_log, columns=headers)
         st.download_button(
             label="📥 Download Attendance",
             data=df_log.to_csv(index=False),
