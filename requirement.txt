@@ -7,3 +7,6 @@ datetime
 gspread
 oauth2client
 gspread_dataframe
+google-auth
+google-auth-oauthlib
+google-api-python-client
