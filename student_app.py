@@ -44,8 +44,8 @@ def load_data():
         st.stop()
 
 # --- UI Logic ---
-if st.sidebar.button("🔄 Refresh Data"):
-    st.experimental_rerun()
+# if st.sidebar.button("🔄 Refresh Data"):
+#     st.experimental_rerun()
 
 students = load_data()
 
