@@ -11,7 +11,7 @@ from googleapiclient.discovery import build
 st.set_page_config(page_title="Student Attendance Tracker", layout="wide")
 
 # Google Sheets API Setup
-SPREADSHEET_ID = '1QBEXA0UVnpfXGpxbhYsqiaIhXPhRS60H'  # Replace with actual sheet ID
+SPREADSHEET_ID = '1dwju2Um-3RXlaOKwRS7jaNEmIXBGMIbMxIOv4t5Lpnw'  # Replace with actual sheet ID
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 @st.cache_data(show_spinner=False)
@@ -114,7 +114,25 @@ if mode == "📊 View Attendance Summary":
                 st.info(f"**Parent 2:** {info['Parents Number 2']}")
 
         try:
-            log = pd.read_csv("attendance_log.csv")
+            # log = pd.read_csv("attendance_log.csv")
+            SPREADSHEET_ID_2 = "1iZHggnfAjbNPZD_lV0fDCLmbVc1s7Kj0vCZYm5YLPtY"
+            creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+            service = build(
+              'sheets', 'v4',
+              credentials=creds,
+              client_options={"quota_project_id": creds.project_id}
+            )
+            # service = build('sheets', 'v4', credentials=creds)
+            sheet = service.spreadsheets()
+            result = sheet.values().get(
+                spreadsheetId=SPREADSHEET_ID_2,
+                range='Attendance Log!A1:Z1000'
+            ).execute()
+
+            values = result.get("values", [])
+            headers = values[0] if values else ["Date", "Student Name", "Class", "Teacher", "Parent 1", "Status"]
+            log = pd.DataFrame(values[1:], columns=headers) if len(values) > 1 else pd.DataFrame(columns=headers)
+
             student_log = log[log["Student Name"] == selected_student]
 
             if not student_log.empty:
@@ -170,12 +188,21 @@ elif mode == "📝 Mark Attendance":
         # Step 1: Read existing attendance data from the sheet
         # https://docs.google.com/spreadsheets/d/1iZHggnfAjbNPZD_lV0fDCLmbVc1s7Kj0vCZYm5YLPtY/edit?usp=sharing
         SPREADSHEET_ID_2 = "1iZHggnfAjbNPZD_lV0fDCLmbVc1s7Kj0vCZYm5YLPtY"
+        creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+        service = build(
+          'sheets', 'v4',
+          credentials=creds,
+          client_options={"quota_project_id": creds.project_id}
+        )
+        # service = build('sheets', 'v4', credentials=creds)
+        sheet = service.spreadsheets()
         result = sheet.values().get(
             spreadsheetId=SPREADSHEET_ID_2,
-            # range=ATTENDANCE_RANGE
+            range='Attendance Log!A1:Z1000'
         ).execute()
-    
+
         values = result.get("values", [])
+        
         headers = values[0] if values else ["Date", "Student Name", "Class", "Teacher", "Parent 1", "Status"]
         existing_data = pd.DataFrame(values[1:], columns=headers) if len(values) > 1 else pd.DataFrame(columns=headers)
     
