@@ -241,7 +241,7 @@ elif mode == "📝 Mark Attendance":
         updated_data = existing_data.values.tolist() + attendance_log
         sheet.values().update(
             spreadsheetId=SPREADSHEET_ID_2,
-            range='Attendance Log!A1:Z1000'
+            range='Attendance Log!A1:Z1000',
             valueInputOption="RAW",
             body={"values": [headers] + updated_data}
         ).execute()
