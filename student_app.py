@@ -116,6 +116,7 @@ if mode == "📊 View Attendance Summary":
         try:
             # log = pd.read_csv("attendance_log.csv")
             SPREADSHEET_ID_2 = "1iZHggnfAjbNPZD_lV0fDCLmbVc1s7Kj0vCZYm5YLPtY"
+            creds_dict = st.secrets["gcp_service_account"]
             creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
             service = build(
               'sheets', 'v4',
@@ -188,6 +189,7 @@ elif mode == "📝 Mark Attendance":
         # Step 1: Read existing attendance data from the sheet
         # https://docs.google.com/spreadsheets/d/1iZHggnfAjbNPZD_lV0fDCLmbVc1s7Kj0vCZYm5YLPtY/edit?usp=sharing
         SPREADSHEET_ID_2 = "1iZHggnfAjbNPZD_lV0fDCLmbVc1s7Kj0vCZYm5YLPtY"
+        creds_dict = st.secrets["gcp_service_account"]
         creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
         service = build(
           'sheets', 'v4',
