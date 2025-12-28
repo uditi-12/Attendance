@@ -368,6 +368,7 @@ else:
 
         if st.button("✅ Submit Attendance"):
             SPREADSHEET_ID_2 = "1iZHggnfAjbNPZD_lV0fDCLmbVc1s7Kj0vCZYm5YLPtY"
+            creds_dict = st.secrets["gcp_service_account"]
             creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
             service = build('sheets', 'v4', credentials=creds)
             sheet = service.spreadsheets()
