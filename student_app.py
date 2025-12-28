@@ -98,11 +98,12 @@ st.sidebar.title("Attendance Portal")
 
 if not st.session_state.logged_in:
     # --- SHOW LOGIN FORM ---
-    st.sidebar.subheader("User Login")
-    phone_input = st.sidebar.text_input("Registered Phone Number").strip().replace(" ", "")
-    password_input = st.sidebar.text_input("Password (Parents only)", type="password").strip()
+    with st.sidebar.subheader("User Login"):
+        phone_input = st.sidebar.text_input("Registered Phone Number").strip().replace(" ", "")
+        password_input = st.sidebar.text_input("Password (Parents only)", type="password").strip()
+        submit_button = st.form_submit_button("Login")
     
-    if st.sidebar.form_submit_button("Login"):
+    if submit_button:
         if not phone_input:
             st.sidebar.error("Please enter a phone number.")
         else:
