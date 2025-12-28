@@ -155,152 +155,239 @@ else:
     else:
         mode = st.sidebar.radio("Choose Mode", ["📊 View Attendance Summary", "📝 Mark Attendance"])
 
-# --- View Attendance Summary ---
-if mode == "📊 View Attendance Summary":
-    st.title("📊 Attendance Summary")
-    if role == "Parent":
-        student_list = authorized_students["Student Name"].dropna().unique().tolist()
-    else:
-        student_list = students["Student Name"].dropna().unique().tolist()
+# # --- View Attendance Summary ---
+# if mode == "📊 View Attendance Summary":
+#     st.title("📊 Attendance Summary")
+#     if role == "Parent":
+#         student_list = authorized_students["Student Name"].dropna().unique().tolist()
+#     else:
+#         student_list = students["Student Name"].dropna().unique().tolist()
     
-    selected_student = st.selectbox("Select Student", student_list)
+#     selected_student = st.selectbox("Select Student", student_list)
 
-    if selected_student:
-        st.markdown("---")
-        info = students[students["Student Name"] == selected_student].iloc[0]
-        col1, col2 = st.columns(2)
-        with col1:
-            st.info(f"**Student Name:** {selected_student}")
-            st.info(f"**Class:** {info['Class']}")
-        with col2:
-            st.info(f"**Teacher:** {info['Teacher Name']}")
-            st.info(f"**Parent 1:** {info['Parents Number 1']}")
-            if pd.notna(info['Parents Number 2']):
-                st.info(f"**Parent 2:** {info['Parents Number 2']}")
+#     if selected_student:
+#         st.markdown("---")
+#         info = students[students["Student Name"] == selected_student].iloc[0]
+#         col1, col2 = st.columns(2)
+#         with col1:
+#             st.info(f"**Student Name:** {selected_student}")
+#             st.info(f"**Class:** {info['Class']}")
+#         with col2:
+#             st.info(f"**Teacher:** {info['Teacher Name']}")
+#             st.info(f"**Parent 1:** {info['Parents Number 1']}")
+#             if pd.notna(info['Parents Number 2']):
+#                 st.info(f"**Parent 2:** {info['Parents Number 2']}")
 
-        try:
-            # Load attendance log (no caching)
+#         try:
+#             # Load attendance log (no caching)
+#             SPREADSHEET_ID_2 = "1iZHggnfAjbNPZD_lV0fDCLmbVc1s7Kj0vCZYm5YLPtY"
+#             creds_dict = st.secrets["gcp_service_account"]
+#             creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+#             service = build('sheets', 'v4', credentials=creds)
+#             sheet = service.spreadsheets()
+#             result = sheet.values().get(
+#                 spreadsheetId=SPREADSHEET_ID_2,
+#                 range='Attendance Log!A1:Z1000'
+#             ).execute()
+
+#             values = result.get("values", [])
+#             headers = values[0] if values else ["Date", "Student Name", "Class", "Teacher", "Parent 1", "Status"]
+#             log = pd.DataFrame(values[1:], columns=headers) if len(values) > 1 else pd.DataFrame(columns=headers)
+
+#             student_log = log[(log["Student Name"] == selected_student) & (log["Status"] != "No Class")]
+
+#             if not student_log.empty:
+#                 present = student_log['Status'].value_counts().get('Present', 0)
+#                 absent = student_log['Status'].value_counts().get('Absent', 0)
+#                 total = present + absent
+#                 percent = (present / total) * 100 if total else 0
+
+#                 st.metric("✅ Present", present)
+#                 st.metric("❌ Absent", absent)
+#                 st.progress(percent / 100)
+#                 st.write(f"**Attendance %:** `{percent:.2f}%`")
+#                 st.dataframe(student_log[['Date', 'Status']].sort_values('Date'))
+#             else:
+#                 st.warning("No attendance records found.")
+#         except Exception as e:
+#             st.warning(f"Error loading attendance log: {e}")
+
+# # --- Mark Attendance (Teacher only) ---
+# elif mode == "📝 Mark Attendance":
+#     if role != "Teacher":
+#         st.error("🚫 Only teachers can mark attendance.")
+#         st.stop()
+
+#     st.title("📝 Mark Attendance")
+
+#     selected_date = st.date_input("📅 Select Attendance Date", date.today())
+#     today = selected_date.strftime("%Y-%m-%d")
+#     st.write(f"### Mark Attendance for: `{today}`")
+
+#     attendance_status = {}
+
+#     for _, row in students.iterrows():
+#         name = row['Student Name']
+#         student_class = row['Class']
+#         parent1 = row['Parents Number 1']
+#         unique_key = f"{name}_{student_class}_{parent1}"
+
+#         status = st.radio(
+#             f"{name} (Class: {student_class}, Parent: {parent1})",
+#             options=["Present", "Absent", "No Class"],
+#             index = 2,
+#             key=unique_key,
+#             horizontal=True
+#         )
+#         attendance_status[unique_key] = {
+#             "Student Name": name,
+#             "Class": student_class,
+#             "Parent 1": parent1,
+#             "Status": status
+#         }
+
+#     if st.button("✅ Submit Attendance"):
+#         SPREADSHEET_ID_2 = "1iZHggnfAjbNPZD_lV0fDCLmbVc1s7Kj0vCZYm5YLPtY"
+#         creds_dict = st.secrets["gcp_service_account"]
+#         creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+#         service = build('sheets', 'v4', credentials=creds)
+#         sheet = service.spreadsheets()
+#         result = sheet.values().get(
+#             spreadsheetId=SPREADSHEET_ID_2,
+#             range='Attendance Log!A1:Z1000'
+#         ).execute()
+
+#         values = result.get("values", [])
+#         headers = values[0] if values else ["Date", "Student Name", "Class", "Teacher", "Parent 1", "Status"]
+#         existing_data = pd.DataFrame(values[1:], columns=headers) if len(values) > 1 else pd.DataFrame(columns=headers)
+
+#         existing_today = existing_data[existing_data["Date"] == today]
+
+#         if not existing_today.empty:
+#             st.warning("⚠️ Attendance for this date already exists!")
+#             update = st.radio("Do you want to update it?", ["No", "Yes"], index=0)
+#             if update == "No":
+#                 st.stop()
+#             else:
+#                 existing_data = existing_data[existing_data["Date"] != today]
+
+#         attendance_log = []
+#         for entry in attendance_status.values():
+#             teacher = students[
+#                 (students["Student Name"] == entry["Student Name"]) &
+#                 (students["Class"] == entry["Class"]) &
+#                 (students["Parents Number 1"] == entry["Parent 1"])
+#             ]['Teacher Name'].values[0]
+
+#             attendance_log.append([
+#                 today,
+#                 entry["Student Name"],
+#                 entry["Class"],
+#                 teacher,
+#                 entry["Parent 1"],
+#                 entry["Status"]
+#             ])
+
+#         updated_data = existing_data.values.tolist() + attendance_log
+#         sheet.values().update(
+#             spreadsheetId=SPREADSHEET_ID_2,
+#             range='Attendance Log!A1:Z1000',
+#             valueInputOption="RAW",
+#             body={"values": [headers] + updated_data}
+#         ).execute()
+
+#         st.success("✅ Attendance saved to Google Sheet successfully!")
+#         df_log = pd.DataFrame(attendance_log, columns=headers)
+#         st.download_button(
+#             label="📥 Download Attendance",
+#             data=df_log.to_csv(index=False),
+#             file_name=f"attendance_log_{today}.csv",
+#             mime="text/csv"
+#         )
+# --- View Attendance Summary ---
+    if mode == "📊 View Attendance Summary":
+        st.title("📊 Attendance Summary")
+        if role == "Parent":
+            student_list = st.session_state.auth_students["Student Name"].dropna().unique().tolist()
+        else:
+            student_list = students["Student Name"].dropna().unique().tolist()
+
+        selected_student = st.selectbox("Select Student", student_list)
+
+        if selected_student:
+            st.markdown("---")
+            info = students[students["Student Name"] == selected_student].iloc[0]
+            col1, col2 = st.columns(2)
+            with col1:
+                st.info(f"**Student Name:** {selected_student}\n\n**Class:** {info['Class']}")
+            with col2:
+                st.info(f"**Teacher:** {info['Teacher Name']}\n\n**Parent 1:** {info['Parents Number 1']}")
+
+            try:
+                SPREADSHEET_ID_2 = "1iZHggnfAjbNPZD_lV0fDCLmbVc1s7Kj0vCZYm5YLPtY"
+                creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+                service = build('sheets', 'v4', credentials=creds)
+                result = service.spreadsheets().values().get(
+                    spreadsheetId=SPREADSHEET_ID_2, range='Attendance Log!A1:Z1000'
+                ).execute()
+
+                values = result.get("values", [])
+                headers = values[0] if values else ["Date", "Student Name", "Class", "Teacher", "Parent 1", "Status"]
+                log = pd.DataFrame(values[1:], columns=headers) if len(values) > 1 else pd.DataFrame(columns=headers)
+
+                student_log = log[(log["Student Name"] == selected_student) & (log["Status"] != "No Class")]
+
+                if not student_log.empty:
+                    present = student_log['Status'].value_counts().get('Present', 0)
+                    absent = student_log['Status'].value_counts().get('Absent', 0)
+                    total = present + absent
+                    percent = (present / total) * 100 if total else 0
+
+                    st.metric("✅ Present", present)
+                    st.metric("❌ Absent", absent)
+                    st.progress(percent / 100)
+                    st.write(f"**Attendance %:** `{percent:.2f}%`")
+                    st.dataframe(student_log[['Date', 'Status']].sort_values('Date', ascending=False))
+                else:
+                    st.warning("No attendance records found.")
+            except Exception as e:
+                st.warning(f"Attendance log could not be loaded: {e}")
+
+    # --- Mark Attendance (Teacher Only) ---
+    elif mode == "📝 Mark Attendance":
+        st.title("📝 Mark Attendance")
+        selected_date = st.date_input("📅 Date", date.today())
+        today = selected_date.strftime("%Y-%m-%d")
+        
+        attendance_status = {}
+        for _, row in students.iterrows():
+            unique_key = f"{row['Student Name']}_{row['Class']}_{row['Parents Number 1']}"
+            status = st.radio(f"{row['Student Name']} ({row['Class']})", 
+                             ["Present", "Absent", "No Class"], index=2, key=unique_key, horizontal=True)
+            attendance_status[unique_key] = {"Name": row['Student Name'], "Class": row['Class'], "P1": row['Parents Number 1'], "Status": status}
+
+        if st.button("✅ Submit Attendance"):
             SPREADSHEET_ID_2 = "1iZHggnfAjbNPZD_lV0fDCLmbVc1s7Kj0vCZYm5YLPtY"
-            creds_dict = st.secrets["gcp_service_account"]
             creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
             service = build('sheets', 'v4', credentials=creds)
             sheet = service.spreadsheets()
-            result = sheet.values().get(
-                spreadsheetId=SPREADSHEET_ID_2,
-                range='Attendance Log!A1:Z1000'
-            ).execute()
+            
+            # Load existing to prevent duplicates for same day
+            res = sheet.values().get(spreadsheetId=SPREADSHEET_ID_2, range='Attendance Log!A1:Z1000').execute()
+            vals = res.get("values", [])
+            headers = vals[0] if vals else ["Date", "Student Name", "Class", "Teacher", "Parent 1", "Status"]
+            existing_df = pd.DataFrame(vals[1:], columns=headers) if len(vals) > 1 else pd.DataFrame(columns=headers)
+            
+            # Remove today's old data if updating
+            existing_df = existing_df[existing_df["Date"] != today]
 
-            values = result.get("values", [])
-            headers = values[0] if values else ["Date", "Student Name", "Class", "Teacher", "Parent 1", "Status"]
-            log = pd.DataFrame(values[1:], columns=headers) if len(values) > 1 else pd.DataFrame(columns=headers)
+            new_entries = []
+            for entry in attendance_status.values():
+                t_search = students[students["Student Name"] == entry["Name"]]
+                teacher = t_search['Teacher Name'].values[0] if not t_search.empty else "Unknown"
+                new_entries.append([today, entry["Name"], entry["Class"], teacher, entry["P1"], entry["Status"]])
 
-            student_log = log[(log["Student Name"] == selected_student) & (log["Status"] != "No Class")]
-
-            if not student_log.empty:
-                present = student_log['Status'].value_counts().get('Present', 0)
-                absent = student_log['Status'].value_counts().get('Absent', 0)
-                total = present + absent
-                percent = (present / total) * 100 if total else 0
-
-                st.metric("✅ Present", present)
-                st.metric("❌ Absent", absent)
-                st.progress(percent / 100)
-                st.write(f"**Attendance %:** `{percent:.2f}%`")
-                st.dataframe(student_log[['Date', 'Status']].sort_values('Date'))
-            else:
-                st.warning("No attendance records found.")
-        except Exception as e:
-            st.warning(f"Error loading attendance log: {e}")
-
-# --- Mark Attendance (Teacher only) ---
-elif mode == "📝 Mark Attendance":
-    if role != "Teacher":
-        st.error("🚫 Only teachers can mark attendance.")
-        st.stop()
-
-    st.title("📝 Mark Attendance")
-
-    selected_date = st.date_input("📅 Select Attendance Date", date.today())
-    today = selected_date.strftime("%Y-%m-%d")
-    st.write(f"### Mark Attendance for: `{today}`")
-
-    attendance_status = {}
-
-    for _, row in students.iterrows():
-        name = row['Student Name']
-        student_class = row['Class']
-        parent1 = row['Parents Number 1']
-        unique_key = f"{name}_{student_class}_{parent1}"
-
-        status = st.radio(
-            f"{name} (Class: {student_class}, Parent: {parent1})",
-            options=["Present", "Absent", "No Class"],
-            index = 2,
-            key=unique_key,
-            horizontal=True
-        )
-        attendance_status[unique_key] = {
-            "Student Name": name,
-            "Class": student_class,
-            "Parent 1": parent1,
-            "Status": status
-        }
-
-    if st.button("✅ Submit Attendance"):
-        SPREADSHEET_ID_2 = "1iZHggnfAjbNPZD_lV0fDCLmbVc1s7Kj0vCZYm5YLPtY"
-        creds_dict = st.secrets["gcp_service_account"]
-        creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
-        service = build('sheets', 'v4', credentials=creds)
-        sheet = service.spreadsheets()
-        result = sheet.values().get(
-            spreadsheetId=SPREADSHEET_ID_2,
-            range='Attendance Log!A1:Z1000'
-        ).execute()
-
-        values = result.get("values", [])
-        headers = values[0] if values else ["Date", "Student Name", "Class", "Teacher", "Parent 1", "Status"]
-        existing_data = pd.DataFrame(values[1:], columns=headers) if len(values) > 1 else pd.DataFrame(columns=headers)
-
-        existing_today = existing_data[existing_data["Date"] == today]
-
-        if not existing_today.empty:
-            st.warning("⚠️ Attendance for this date already exists!")
-            update = st.radio("Do you want to update it?", ["No", "Yes"], index=0)
-            if update == "No":
-                st.stop()
-            else:
-                existing_data = existing_data[existing_data["Date"] != today]
-
-        attendance_log = []
-        for entry in attendance_status.values():
-            teacher = students[
-                (students["Student Name"] == entry["Student Name"]) &
-                (students["Class"] == entry["Class"]) &
-                (students["Parents Number 1"] == entry["Parent 1"])
-            ]['Teacher Name'].values[0]
-
-            attendance_log.append([
-                today,
-                entry["Student Name"],
-                entry["Class"],
-                teacher,
-                entry["Parent 1"],
-                entry["Status"]
-            ])
-
-        updated_data = existing_data.values.tolist() + attendance_log
-        sheet.values().update(
-            spreadsheetId=SPREADSHEET_ID_2,
-            range='Attendance Log!A1:Z1000',
-            valueInputOption="RAW",
-            body={"values": [headers] + updated_data}
-        ).execute()
-
-        st.success("✅ Attendance saved to Google Sheet successfully!")
-        df_log = pd.DataFrame(attendance_log, columns=headers)
-        st.download_button(
-            label="📥 Download Attendance",
-            data=df_log.to_csv(index=False),
-            file_name=f"attendance_log_{today}.csv",
-            mime="text/csv"
-        )
+            final_data = [headers] + existing_df.values.tolist() + new_entries
+            sheet.values().update(spreadsheetId=SPREADSHEET_ID_2, range="Attendance Log!A1", 
+                                 valueInputOption="RAW", body={"values": final_data}).execute()
+            st.success("✅ Attendance submitted!")
