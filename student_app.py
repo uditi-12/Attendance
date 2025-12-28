@@ -14,6 +14,16 @@ st.set_page_config(page_title="Student Attendance Tracker", layout="wide")
 SPREADSHEET_ID = '1dwju2Um-3RXlaOKwRS7jaNEmIXBGMIbMxIOv4t5Lpnw'  # Replace with actual sheet ID
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
+# Initialize Session State for Login
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+if 'user_role' not in st.session_state:
+    st.session_state.user_role = None
+if 'user_phone' not in st.session_state:
+    st.session_state.user_phone = None
+if 'auth_students' not in st.session_state:
+    st.session_state.auth_students = None
+
 # Load student data from Google Sheets (no cache)
 def load_data():
     try:
@@ -34,59 +44,116 @@ def load_data():
 
         df = pd.DataFrame(values[1:], columns=values[0])
 
-        for col in ['Parents Number 1', 'Parents Number 2']:
+        for col in ['Parents Number 1', 'Parents Number 2', "Teacher Phone Number", "Password"]:
             if col in df.columns:
-                df[col] = df[col].astype(str).str.strip()
+                df[col] = df[col].astype(str).str.replace(".0", "", regex=False).str.strip()
         return df
 
     except Exception as e:
         st.error(f"❌ Error loading data from Google Sheets: {e}")
         st.stop()
 
-# --- UI Logic ---
-# if st.sidebar.button("🔄 Refresh Data"):
-#     st.experimental_rerun()
-
 students = load_data()
 
-st.info("Enter your registered Phone Number in sidebar")
-st.sidebar.title("User Login")
+# st.info("Enter your registered Phone Number in sidebar")
+# st.sidebar.title("User Login")
 
-phone_input = st.sidebar.text_input("Enter your registered Phone Number", "").strip().replace(" ", "")
+# phone_input = st.sidebar.text_input("Enter your registered Phone Number", "").strip().replace(" ", "")
 
-if not phone_input:
-    st.sidebar.info("Please enter your phone number to continue.")
-    st.stop()
+# if not phone_input:
+#     st.sidebar.info("Please enter your phone number to continue.")
+#     st.stop()
 
-is_parent = ((students["Parents Number 1"] == phone_input) | 
-             (students["Parents Number 2"] == phone_input)).any()
+# is_parent = ((students["Parents Number 1"] == phone_input) | 
+#              (students["Parents Number 2"] == phone_input)).any()
 
-if 'Teacher Phone Number' in students.columns:
-    is_teacher = (students['Teacher Phone Number'] == phone_input).any()
+# if 'Teacher Phone Number' in students.columns:
+#     is_teacher = (students['Teacher Phone Number'] == phone_input).any()
+# else:
+#     is_teacher = False
+
+# if not is_parent and not is_teacher:
+#     st.sidebar.error("❌ Phone number not found in system.")
+#     st.stop()
+
+# if is_parent and is_teacher:
+#     role = st.sidebar.selectbox("Select Role", ["Parent", "Teacher"])
+# elif is_parent:
+#     role = "Parent"
+# else:
+#     role = "Teacher"
+
+# st.sidebar.success(f"Logged in as: {role}")
+
+# if role == "Parent":
+#     authorized_students = students[
+#         (students["Parents Number 1"] == phone_input) |
+#         (students["Parents Number 2"] == phone_input)
+#     ]
+#     mode = st.sidebar.radio("Choose Mode", ["📊 View Attendance Summary"])
+# else:
+#     mode = st.sidebar.radio("Choose Mode", ["📊 View Attendance Summary", "📝 Mark Attendance"])
+# --- SIDEBAR LOGIC ---
+st.sidebar.title("Attendance Portal")
+
+if not st.session_state.logged_in:
+    # --- SHOW LOGIN FORM ---
+    st.sidebar.subheader("User Login")
+    phone_input = st.sidebar.text_input("Registered Phone Number").strip().replace(" ", "")
+    password_input = st.sidebar.text_input("Password (Parents only)", type="password").strip()
+    
+    if st.sidebar.button("Login"):
+        if not phone_input:
+            st.sidebar.error("Please enter a phone number.")
+        else:
+            user_record = students[
+                (students["Parents Number 1"] == phone_input) |
+                (students["Parents Number 2"] == phone_input) |
+                (students.get("Teacher Phone Number", "") == phone_input)
+            ]
+
+            if user_record.empty:
+                st.sidebar.error("❌ Phone number not found.")
+            else:
+                record_count = len(user_record)
+                is_teacher_num = (students.get('Teacher Phone Number', "") == phone_input).any()
+
+                # Teacher Logic: Bypass password if > 1 record or flagged as teacher
+                if record_count > 1 or is_teacher_num:
+                    st.session_state.logged_in = True
+                    st.session_state.user_role = "Teacher"
+                    st.session_state.user_phone = phone_input
+                    st.rerun()
+                else:
+                    # Parent Logic: Check Password
+                    correct_password = str(user_record.iloc[0].get("Password", "")).strip()
+                    if password_input == correct_password:
+                        st.session_state.logged_in = True
+                        st.session_state.user_role = "Parent"
+                        st.session_state.user_phone = phone_input
+                        st.session_state.auth_students = user_record
+                        st.rerun()
+                    else:
+                        st.sidebar.error("❌ Incorrect Password.")
+
+    st.info("👋 Welcome! Please login in the sidebar to access the tracker.")
+    st.stop() # Prevent app from running until logged in
+
 else:
-    is_teacher = False
+    # --- SHOW LOGGED IN UI ---
+    st.sidebar.success(f"Logged in as: {st.session_state.user_role}")
+    if st.sidebar.button("Logout"):
+        st.session_state.logged_in = False
+        st.session_state.user_role = None
+        st.rerun()
 
-if not is_parent and not is_teacher:
-    st.sidebar.error("❌ Phone number not found in system.")
-    st.stop()
+    role = st.session_state.user_role
+    phone_input = st.session_state.user_phone
 
-if is_parent and is_teacher:
-    role = st.sidebar.selectbox("Select Role", ["Parent", "Teacher"])
-elif is_parent:
-    role = "Parent"
-else:
-    role = "Teacher"
-
-st.sidebar.success(f"Logged in as: {role}")
-
-if role == "Parent":
-    authorized_students = students[
-        (students["Parents Number 1"] == phone_input) |
-        (students["Parents Number 2"] == phone_input)
-    ]
-    mode = st.sidebar.radio("Choose Mode", ["📊 View Attendance Summary"])
-else:
-    mode = st.sidebar.radio("Choose Mode", ["📊 View Attendance Summary", "📝 Mark Attendance"])
+    if role == "Parent":
+        mode = st.sidebar.radio("Choose Mode", ["📊 View Attendance Summary"])
+    else:
+        mode = st.sidebar.radio("Choose Mode", ["📊 View Attendance Summary", "📝 Mark Attendance"])
 
 # --- View Attendance Summary ---
 if mode == "📊 View Attendance Summary":
