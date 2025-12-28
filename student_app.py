@@ -399,7 +399,7 @@
 #             sheet.values().update(spreadsheetId=SPREADSHEET_ID_2, range="Attendance Log!A1", 
 #                                  valueInputOption="RAW", body={"values": final_data}).execute()
 #             st.success("✅ Attendance submitted!")
-%%writefile student_app.py
+
 import streamlit as st
 import pandas as pd
 from datetime import date
