@@ -98,10 +98,16 @@ st.sidebar.title("Attendance Portal")
 
 if not st.session_state.logged_in:
     # --- SHOW LOGIN FORM ---
-    with st.sidebar.subheader("User Login"):
-        phone_input = st.sidebar.text_input("Registered Phone Number").strip().replace(" ", "")
-        password_input = st.sidebar.text_input("Password (Parents only)", type="password").strip()
-        submit_button = st.form_submit_button("Login")
+    # 1. Create the form object in the sidebar
+    login_form = st.sidebar.form("login_form")
+    
+    # 2. Add widgets to that specific form object
+    login_form.subheader("User Login")
+    phone_input = login_form.text_input("Registered Phone Number").strip().replace(" ", "")
+    password_input = login_form.text_input("Password (Parents only)", type="password").strip()
+    
+    # 3. Add the submit button to that specific form object
+    submit_button = login_form.form_submit_button("Login")
     
     if submit_button:
         if not phone_input:
