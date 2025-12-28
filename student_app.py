@@ -127,7 +127,7 @@ if mode == "📊 View Attendance Summary":
             headers = values[0] if values else ["Date", "Student Name", "Class", "Teacher", "Parent 1", "Status"]
             log = pd.DataFrame(values[1:], columns=headers) if len(values) > 1 else pd.DataFrame(columns=headers)
 
-            student_log = log[log["Student Name"] == selected_student]
+            student_log = log[(log["Student Name"] == selected_student) & (log["Status"] != "No Class")]
 
             if not student_log.empty:
                 present = student_log['Status'].value_counts().get('Present', 0)
@@ -168,6 +168,7 @@ elif mode == "📝 Mark Attendance":
         status = st.radio(
             f"{name} (Class: {student_class}, Parent: {parent1})",
             options=["Present", "Absent", "No Class"],
+            index = 2,
             key=unique_key,
             horizontal=True
         )
