@@ -28,7 +28,7 @@ if 'auth_students' not in st.session_state:
 def load_data():
     try:
         creds_dict = st.secrets["gcp_service_account"]
-        creds = Credentials.from_service_account_info(dict(creds_dict), scopes=SCOPES)
+        creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
         service = build('sheets', 'v4', credentials=creds)
         sheet = service.spreadsheets()
 
@@ -102,7 +102,7 @@ if not st.session_state.logged_in:
     phone_input = st.sidebar.text_input("Registered Phone Number").strip().replace(" ", "")
     password_input = st.sidebar.text_input("Password (Parents only)", type="password").strip()
     
-    if st.sidebar.button("Login"):
+    if st.sidebar.form_submit_button("Login"):
         if not phone_input:
             st.sidebar.error("Please enter a phone number.")
         else:
