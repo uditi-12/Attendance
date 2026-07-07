@@ -554,7 +554,7 @@ if mode == "📊 View Attendance Summary":
             service = build('sheets', 'v4', credentials=creds)
             
             result = service.spreadsheets().values().get(
-                spreadsheetId=SPREADSHEET_ID_2, range='Attendance Log!A1:Z1000'
+                spreadsheetId=SPREADSHEET_ID_2, range='Attendance Log!A1:Z'
             ).execute()
 
             values = result.get("values", [])
@@ -602,7 +602,7 @@ elif mode == "📝 Mark Attendance":
         sheet = service.spreadsheets()
         
         # Load existing to prevent duplicates for same day
-        res = sheet.values().get(spreadsheetId=SPREADSHEET_ID_2, range='Attendance Log!A1:Z1000').execute()
+        res = sheet.values().get(spreadsheetId=SPREADSHEET_ID_2, range='Attendance Log!A1:Z').execute()
         vals = res.get("values", [])
         headers = vals[0] if vals else ["Date", "Student Name", "Class", "Teacher", "Parent 1", "Status"]
         existing_df = pd.DataFrame(vals[1:], columns=headers) if len(vals) > 1 else pd.DataFrame(columns=headers)
